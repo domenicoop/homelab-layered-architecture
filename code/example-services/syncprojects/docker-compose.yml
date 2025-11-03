@@ -1,0 +1,23 @@
+services:
+  syncthing:
+    image: syncthing/syncthing
+    container_name: syncprojects-syncthing
+    networks:
+      - syncprojects_net
+    environment:
+      - PUID=1000 # Syncthing runs as UID 1000
+      - PGID=1000 # Syncthing runs as GID 1000
+      - PCAP=cap_chown,cap_fowner+ep # Required capabilities for Syncthing
+      - TZ=Europe/Rome # Set your timezone
+    volumes:
+      - ${SYNCTHING_DATA}:/var/syncthing
+    restart: unless-stopped
+    healthcheck:
+      test: curl -fkLsS -m 2 127.0.0.1:8384/rest/noauth/health | grep -o --color=never OK || exit 1
+      interval: 1m
+      timeout: 10s
+      retries: 3
+
+networks:
+  syncprojects_net:
+     external: true

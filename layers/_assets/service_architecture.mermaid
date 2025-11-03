@@ -1,0 +1,80 @@
+---
+config:
+  layout: dagre
+---
+flowchart TD
+ subgraph HomelabInfrastructure["Homelab Infrastructure"]
+    direction TB
+        DNS_VM@{ label: "<strong>DNS VM (The Map)</strong><br>AdGuard/Pi-hole<br><i>Resolves *.homelab.lan to Caddy's IP</i>" }
+        ServicesVM["ServicesVM"]
+  end
+ subgraph ServicesVM["<strong>Services VM</strong>"]
+    direction TB
+        DockerEngine["DockerEngine"]
+  end
+ subgraph DockerEngine["Docker Engine"]
+    direction TB
+        HubAndGateway["HubAndGateway"]
+        Spokes["Spokes"]
+        DockerNetworks["DockerNetworks"]
+  end
+ subgraph HubAndGateway["Central Hub & Gateway"]
+    direction LR
+        Caddy["<strong>Caddy Reverse Proxy (Hub)</strong><br><i>Listens on ports 80, 443</i>"]
+        Tailscale["<strong>Tailscale Container (Gateway)</strong><br><i>Subnet Router &amp; Exit Node</i>"]
+  end
+ subgraph Spokes["Isolated Service Stacks (Spokes)"]
+    direction LR
+        ServiceStackA["ServiceStackA"]
+        ServiceStackB["ServiceStackB"]
+  end
+ subgraph ServiceStackA["Stack A (e.g., Git Server)"]
+        AppA["Gitea Container"]
+        DB_A["Database"]
+  end
+ subgraph ServiceStackB["Stack B (e.g., Photo App)"]
+        AppB["Immich Server"]
+        DB_B["Database"]
+        ML_B["ML Worker"]
+  end
+ subgraph DockerNetworks["Private Docker Networks (Isolation)"]
+        NetA[("gitea_net")]
+        NetB[("immich_net")]
+  end
+    AppA -- Connects to --> DB_A
+    AppB --> DB_B & ML_B
+    LocalUser["Local User<br><i>(On Home LAN)</i>"] -- "DNS Query for gitea.homelab.lan" --> DNS_VM
+    RemoteUser["Remote User<br><i>(via Internet)</i>"] -- DNS Query via Tailscale --> DNS_VM
+    DNS_VM -- Responds with Caddy IP --> LocalUser
+    LocalUser -- HTTPS Request to Caddy --> Caddy
+    RemoteUser -- Connects via Tailscale VPN --> Tailscale
+    Tailscale -- Forwards request internally --> Caddy
+    Caddy -- Routes request to AppA --> AppA
+    Caddy -- Routes request to AppB --> AppB
+    ServiceStackA -- Runs on --> NetA
+    ServiceStackB -- Runs on --> NetB
+    Caddy -- Connects to --> NetA & NetB
+    DockerNetworks --> DockerEngine
+     DNS_VM:::vm
+     Caddy:::container
+     Tailscale:::container
+     AppA:::container
+     DB_A:::container
+     AppB:::container
+     DB_B:::container
+     ML_B:::container
+     NetA:::network
+     NetB:::network
+     LocalUser:::user
+     RemoteUser:::user
+    classDef vm fill:#fdebd0,stroke:#a67c52,stroke-width:2px,color:#333
+    classDef container fill:#e9f7ef,stroke:#3a9d5d,stroke-width:2px,color:#333
+    classDef network fill:#ecf5ff,stroke:#409eff,stroke-width:2px,color:#333
+    classDef user fill:#f4f4f5,stroke:#909399,stroke-width:2px,color:#333
+    classDef central_hub fill:#fff0f5,stroke:#c70039,stroke-width:3px,color:#333
+    classDef spoke_stack fill:#f5fff5,stroke:#55a550,stroke-width:2px,color:#333
+    style ServicesVM fill:#fdfbf7,stroke:#6c63ff,stroke-width:3px
+    style DockerEngine fill:#f9f9f9,stroke:#000000,stroke-dasharray: 5 5
+    style Spokes fill:#f8fff8,stroke:#55a550,stroke-dasharray: 3 3
+    style DockerNetworks fill:#f0f9ff,stroke:#0077c8,stroke-dasharray: 5 5
+    style HomelabInfrastructure fill:#eef2f5,stroke:#3b5998,stroke-width:2px

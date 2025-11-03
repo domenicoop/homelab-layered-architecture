@@ -1,0 +1,25 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+ subgraph subGraph0["User's Device"]
+        A["Browser "]
+  end
+ subgraph subGraph1["Homelab Network"]
+        B["Internal DNS Server"]
+        C{"Caddy Reverse Proxy <br> Central Hub"}
+        D["Backend Service <br> Immich Container"]
+  end
+    A -- "1 User type photo.homelab.lan" --> B
+    B -- "2 DNS resolves domain to Caddy's IP" --> C
+    C -- "3 Request arrives at Caddy on port 443" --> C
+    C -- "4 Caddyfile finds route for 'photo.homelab.lan' <br> &amp; terminates TLS (HTTPS -&gt; HTTP)" --> D
+    D -- "5 Service sends response back to Caddy" --> C
+    C -- "6 Caddy encrypts response (HTTP -&gt; HTTPS) <br> and sends back to you" --> A
+    style subGraph0 fill:#a4e4a4,stroke:#38761d,stroke-width:2px,color:#000
+    style subGraph1 fill:#d0e0e3,stroke:#3d85c6,stroke-width:2px,color:#000
+    style A fill:#f9f979,stroke:#e69138,stroke-width:2px
+    style B fill:#f4cccc,stroke:#cc0000,stroke-width:2px
+    style C fill:#c9daf8,stroke:#6d9eeb,stroke-width:3px,font-weight:bold
+    style D fill:#ead1dc,stroke:#9900ff,stroke-width:2px

@@ -1,0 +1,43 @@
+graph TD
+    subgraph BackupWorkflow [Backup Process Flow]
+        direction TB
+
+        %% Initial State
+        State1("<strong>State:</strong> Services Running on Live Data")
+
+        %% Action 1: Stop Services
+        State1 --> Action1{"<strong>Action 1:</strong><br/>Stop all Docker Containers"}
+
+        %% Downtime Window - The critical, short phase
+        subgraph Downtime ["Service Downtime Window (Seconds)"]
+            style Downtime fill:#fef0f0,stroke:#f56c6c,stroke-dasharray: 5 5
+            Action1 --> Action2{"<strong>Action 2:</strong><br/>Create Instant ZFS Snapshot"}
+            Action2 --> Action3{"<strong>Action 3:</strong><br/>Restart all Docker Containers"}
+        end
+
+        %% Parallel States
+        Action3 --> State2("<strong>State:</strong> Services Running on Live Data Again")
+        Action2 -- "Creates a static, read-only copy" --> State3("<strong>State:</strong><br/>ZFS Snapshot Ready for Backup")
+
+        %% Backup Process - Long running, no impact on live services
+        subgraph BackupProcess ["Backup Operations (No Downtime)"]
+            style BackupProcess fill:#f0f9ff,stroke:#0077c8
+            State3 --> Action4{"<strong>Action 4:</strong> Borg Backup Create<br/><i>(Reads ONLY from ZFS Snapshot)</i>"}
+            Action4 --> Offsite[("Offsite Encrypted Storage")]
+            Action4 --> Action5{"<strong>Action 5:</strong> Borg Prune<br/><i>(Cleans old archives)</i>"}
+        end
+        
+        %% Final Cleanup
+        Action5 --> Action6{"<strong>Action 6:</strong><br/>Destroy ZFS Snapshot"}
+        Action6 --> State4("<strong>State:</strong> Backup Complete")
+
+    end
+
+    %% --- Styling ---
+    classDef state fill:#e9f7ef,stroke:#3a9d5d
+    classDef action fill:#fdebd0,stroke:#a67c52
+    classDef storage fill:#f4f4f5,stroke:#909399
+
+    class State1,State2,State3,State4 state
+    class Action1,Action2,Action3,Action4,Action5,Action6 action
+    class Offsite storage

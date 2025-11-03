@@ -1,0 +1,54 @@
+graph TD
+    %% Define Styles for visual distinction, similar to the Homelab Network (subGraph1)
+    style ServicesVM fill:#d0e0e3,stroke:#3d85c6,stroke-width:2px,color:#000
+
+    %% Styles for Internal Layers
+    style VirtualHardware fill:#f3f3f3,stroke:#aaaaaa
+    style OS_Layer fill:#f4cccc,stroke:#cc0000,stroke-width:2px %% Similar to DNS - critical system role
+    style Storage_Layer fill:#c9daf8,stroke:#6d9eeb,stroke-width:2px %% Similar to Caddy - central data management
+    style Container_Layer fill:#ead1dc,stroke:#9900ff,stroke-width:2px %% Similar to Backend Service - application layer
+
+    %% Styles for Key Nodes
+    style Debian fill:#ffad99,stroke:#cc0000,stroke-width:3px,font-weight:bold %% Highlighted Critical OS
+    style ZFS fill:#b8d1f7,stroke:#6d9eeb,stroke-width:3px,font-weight:bold %% Highlighted Central Storage System
+    style Docker fill:#e0c9f1,stroke:#9900ff,stroke-width:3px,font-weight:bold %% Highlighted Engine
+    style OS_vDisk fill:#ffffff,stroke:#333333
+    style Data_vDisk fill:#ffffff,stroke:#333333
+
+    subgraph ServicesVM [Guest VM: System Architecture ⚙️]
+        direction TB
+
+        %% --- Hardware Layer ---
+        subgraph VirtualHardware [Virtual Hardware]
+            direction LR
+            OS_vDisk["OS Virtual Disk (.vmdk)"]
+            Data_vDisk["Data Virtual Disk (.vmdk)"]
+        end
+
+        %% --- OS & Storage Layers ---
+        subgraph OS_Layer [Debian OS Layer 🛡️]
+            direction TB
+            Debian["<strong>Hardened Debian OS</strong><br/>- User: 'runner'<br/>- UFW Firewall & Secure SSH"]
+        end
+        
+        subgraph Storage_Layer [ZFS Storage Layer 💾]
+            ZFS["<strong>ZFS Filesystem</strong>"]
+            ZPool["ZFS Pool: 'datapool'"]
+            Datasets["Granular Datasets<br/>(e.g., datapool/services/app_a)"]
+            
+            ZFS --> ZPool --> Datasets
+        end
+
+        %% --- Containerization Layer ---
+        subgraph Container_Layer [Docker Container Layer 📦]
+            Docker["<strong>Docker Engine</strong><br/>- Secured with userns-remap"]
+            Containers["Application Containers"]
+            Docker --> Containers
+        end
+
+        %% --- Connections ---
+        Debian -- Runs on --> OS_vDisk
+        ZFS -- Manages --> Data_vDisk
+        Docker -- Runs on --> Debian
+        Containers -- "Persist Data to" --> Datasets
+    end

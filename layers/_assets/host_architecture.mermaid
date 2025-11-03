@@ -1,0 +1,32 @@
+graph LR
+    subgraph Host [macOS Host]
+        direction TB
+
+        subgraph Principles [Core Security Principles]
+            direction LR
+            Principle1["<strong>Principle 1: Isolate Process</strong><br/>Run virtualization software as a<br/>non-administrator to limit potential damage."]
+            Principle2["<strong>Principle 2: Encrypt Data at Rest</strong><br/>Store all VM files on a drive with<br/>host-level encryption to protect physical data."]
+        end
+
+        subgraph Users [macOS User Accounts]
+            direction LR
+            AdminUser["Administrator Account"]
+            StandardUser["Standard User Account<br/>e.g., vm-runner"]
+        end
+
+        subgraph Software
+            VMware["VMware Fusion Process"]
+        end
+
+        subgraph Storage
+             SSD[("External SSD<br/>Formatted as APFS Encrypted")]
+        end
+        
+        %% --- Connections & Flow ---
+        Principle1 -- Implemented by --> StandardUser
+        Principle2 -- Implemented by --> SSD
+        
+        StandardUser -- Runs --> VMware
+        
+        VMware -- "Stores VM Files (.vmdk)" --> SSD
+    end

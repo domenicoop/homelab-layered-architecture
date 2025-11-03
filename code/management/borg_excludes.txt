@@ -1,0 +1,25 @@
+# borg-excludes.txt
+# This is a list of patterns to exclude from backups.
+# Comments start with #
+
+# Cache Directories (Common Pattern)
+# The 'C' flag makes it a cache directory, a special hint for Borg.
+C /var/cache
+C /tmp
+
+# General Cache-like directory names
+**/[Cc]ache
+**/[Tt]emp
+**/[Tt]mp
+
+# Common log file extensions
+*.log
+*.journal
+
+# Specific directories from your services you know are safe to exclude
+# Example: a temporary folder inside your photomanagement service
+/datapool/services/photomanagement/temp_uploads/
+
+# Common system/app files to ignore
+.DS_Store
+Thumbs.db
