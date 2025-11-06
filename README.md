@@ -1,4 +1,4 @@
-# My Homelab
+# My Homelab Layered Architecture
 
 This repository documents the architecture, configuration, and solutions behind my personal Homelab. The primary goal is to present a complete, working setup that prioritizes stability, security, and ease of use.
 
