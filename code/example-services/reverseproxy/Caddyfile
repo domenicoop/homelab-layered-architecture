@@ -1,0 +1,21 @@
+# Caddyfile
+
+# ---------------- Global Options ----------------
+# By default, Caddy enables HTTPS automatically for all sites.
+# For local-only domains like ".lan", it will generate and manage its own
+# trusted local Certificate Authority.
+{
+    log
+}
+
+# Git Version Control Service (Gitea)
+git.homelab.lan {
+    reverse_proxy gitversioncontrol-gitea:3000
+    tls internal
+}
+
+# SyncProjects - Syncthing
+syncprojects.homelab.lan sync.homelab.lan {
+    reverse_proxy syncprojects-syncthing:8384
+    tls internal
+}

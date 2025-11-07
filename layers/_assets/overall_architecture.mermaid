@@ -1,0 +1,92 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#ffffff'
+    lineColor: '#495057'
+    fontSize: 14px
+  layout: elk
+---
+flowchart TD
+ subgraph A["Host Layer"]
+        VMware["VMware Fusion"]
+        macOS["macOS Host"]
+        SSD[("Encrypted External SSD")]
+  end
+ subgraph ServicesVM["Services VM"]
+        Docker["Docker Engine"]
+        Debian["Hardened Debian OS"]
+        ZFS[("ZFS Data Pool")]
+  end
+ subgraph B["🖥️ Guest Layer: Virtual Machines"]
+        DNS_VM["DNS & Network VM"]
+        DedicatedVMs@{ label: "'X' Dedicated VMs" }
+        ServicesVM
+  end
+ subgraph ServiceStack1["Service Stack A (Git Server)"]
+    direction LR
+        DB1["Database"]
+        App1["App Container"]
+  end
+ subgraph ServiceStack2["Service Stack B (Photo App)"]
+    direction LR
+        DB2["Database"]
+        App2["Web Server"]
+        Worker2["ML Worker"]
+  end
+ subgraph D["Docker Layer: Service Stacks & Containers"]
+        Caddy["Caddy Reverse Proxy"]
+        Tailscale["Tailscale Subnet Router"]
+        ServiceStack1
+        ServiceStack2
+  end
+ subgraph E["Network & Users"]
+        LocalUser["Local User"]
+        RemoteUser["Remote User"]
+  end
+    macOS --> VMware
+    macOS -- Manages --> SSD
+    Debian --> Docker
+    Debian -- Uses --> ZFS
+    App1 -- Connects to --> DB1
+    App2 --> DB2 & Worker2
+    VMware --> B
+    Docker --> D
+    LocalUser -- DNS Query --> DNS_VM
+    LocalUser -- HTTPS Request --> Caddy
+    RemoteUser -- via Tailscale --> Tailscale
+    Tailscale -.-> Caddy
+    Caddy -.-> ServiceStack1 & ServiceStack2
+    ServicesVM -- Borg Backup --> OffsiteBackup[("Offsite Backup Storage")]
+    RemoteUser --> DNS_VM
+    DedicatedVMs@{ shape: rect}
+     VMware:::host
+     macOS:::host
+     SSD:::storage
+     Docker:::docker
+     Debian:::os
+     ZFS:::storage
+     DNS_VM:::guest
+     DedicatedVMs:::guest
+     ServicesVM:::guest
+     DB1:::docker
+     App1:::docker
+     DB2:::docker
+     App2:::docker
+     Worker2:::docker
+     Caddy:::docker
+     Tailscale:::docker
+     LocalUser:::network
+     RemoteUser:::network
+     OffsiteBackup:::storage
+    classDef host fill:#e7f5ff,stroke:#007bff,stroke-width:2px,color:#212529
+    classDef guest fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#212529
+    classDef docker fill:#e2d9f3,stroke:#6f42c1,stroke-width:2px,color:#212529
+    classDef network fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#212529
+    classDef storage fill:#e9ecef,stroke:#6c757d,stroke-width:1.5px,stroke-dasharray:4 4,color:#212529
+    classDef os fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#212529
+    style ServicesVM fill:#fff,stroke:#28a745
+    style B fill:#f8f9fa,stroke:#28a745,stroke-width:2px
+    style D fill:#f8f9fa,stroke:#6f42c1,stroke-width:2px
+    style A fill:#f8f9fa,stroke:#007bff,stroke-width:2px
+    style E fill:#f8f9fa,stroke:#ffc107,stroke-width:2px

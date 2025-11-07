@@ -1,0 +1,46 @@
+services:
+  caddy:
+    # Build the container image using the Dockerfile in the current directory.
+    build: .
+    container_name: reverseproxy-caddy
+    restart: unless-stopped
+
+    # Connect Caddy to multiple Docker networks to access various services.
+    # Additionally, ensure these networks are created beforehand.
+    networks:
+      - caddy_net
+      - git_net
+      - vpnexitnode_net
+      - syncprojects_net
+
+    # Map the standard HTTP and HTTPS ports from the host machine (your VM)
+    # to the Caddy container. All local traffic will be directed to these ports.
+    ports:
+      - "80:80"        # For initial HTTP requests and redirects
+      - "443:443"      # For HTTPS traffic
+      - "443:443/udp"  # For HTTP/3 support
+
+    volumes:
+      # Mount the Caddyfile as read-only. If you change the file on the host,
+      # you just need to restart the container (`docker compose restart caddy`).
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+      # Create a named volume to store Caddy's generated data, most importantly
+      # the local Certificate Authority and TLS certificates. This ensures they
+      # persist even if the container is removed and recreated.
+      - caddy_data:/data
+
+volumes:
+  # Define the named volume used by the service.
+  caddy_data:
+
+# Define multiple external networks to connect the Caddy service to various other services.
+networks:
+  caddy_net:
+    external: true
+  git_net:
+    external: true
+  vpnexitnode_net:
+    external: true
+  syncprojects_net:
+    external: true

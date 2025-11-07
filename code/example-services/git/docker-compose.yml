@@ -1,0 +1,55 @@
+services:
+  git-gitea:
+    image: gitea/gitea:latest-rootless
+    networks:
+      - git_net # Attach to its dedicated private network
+    user: "1000:1000" # Runs as the internal 'node' user
+    container_name: git-gitea
+    restart: unless-stopped
+    depends_on:
+      git-gitea-db:
+        condition: service_healthy
+    environment:
+      - GITEA__database__DB_TYPE=${GITEA_DB_TYPE}
+      - GITEA__database__HOST=git-gitea-db
+      - GITEA__database__NAME=${GITEA_DB_NAME}
+      - GITEA__database__USER=${GITEA_DB_USER}
+      - GITEA__database__PASSWD=${GITEA_DB_PASSWD}
+      - GITEA__server__ROOT_URL=https://git.homelab.lan
+      - GITEA__server__SSH_DOMAIN=git.homelab.lan
+      - GITEA__server__SSH_PORT=2222
+    ports:
+      # Map host port 2222 to the container's SSH port 22.
+      # This exposes Gitea's SSH service to your local network on port 2222.
+      - "2222:22"
+    volumes:
+      - ${GITEA_DATA_LOCATION}:/var/lib/gitea # https://docs.gitea.com/1.21/installation/install-with-docker-rootless#basics
+      - ${GITEA_CONFIG_LOCATION}:/etc/gitea # https://docs.gitea.com/1.21/installation/install-with-docker-rootless#basics
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    extra_hosts:
+      - "git.homelab.lan:host-gateway"
+
+  git-gitea-db:
+    user: "999:0" #  Runs as 'postgres' user (999) and 'root' group (0)
+    image: postgres:14
+    networks:
+      - git_net # Attach to its dedicated private network
+    container_name: git-gitea-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${GITEA_DB_USER}
+      - POSTGRES_PASSWORD=${GITEA_DB_PASSWD}
+      - POSTGRES_DB=${GITEA_DB_NAME}
+    volumes:
+      - ${GITEA_POSTGRES_LOCATION}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${GITEA_DB_USER} -d ${GITEA_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# Define the external network specific to this stack
+networks:
+  git_net:
+    external: true
